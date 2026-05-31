@@ -10,7 +10,6 @@
 </head>
 <body class="pb-24 font-sans text-slate-800">
 
-    <!-- Tela Home -->
     <div id="home" class="flex flex-col items-center justify-center min-h-[85vh] p-4">
         <div class="w-full max-w-sm bg-white p-8 rounded-3xl shadow-lg border border-slate-100 text-center">
             <h1 class="text-slate-400 uppercase tracking-widest text-xs font-bold mb-1">Ponto Pessoal</h1>
@@ -22,27 +21,26 @@
         </div>
     </div>
 
-    <!-- Tela Histórico -->
     <div id="historico" class="hidden p-4 mt-6">
-        <!-- Saldo -->
         <div class="bg-white p-6 rounded-3xl shadow-lg border border-indigo-100 max-w-sm mx-auto mb-6 text-center">
-            <h2 class="text-slate-400 text-xs font-bold uppercase">Banco de Horas</h2>
+            <h2 class="text-slate-400 text-xs font-bold uppercase">Saldo Banco de Horas</h2>
             <div id="saldoTotal" class="text-3xl font-bold text-indigo-600 my-1">0.00h</div>
         </div>
 
         <div class="max-w-sm mx-auto space-y-4">
-            <!-- Ajuste Manual -->
             <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                <h2 class="text-slate-400 text-xs font-bold uppercase mb-2">Ajustar Saldo (Folga/Extra)</h2>
-                <div class="flex gap-2">
-                    <input type="number" step="0.5" id="ajusteInput" placeholder="Ex: -5 ou 2" class="bg-slate-50 p-2 rounded-lg border border-slate-200 text-sm w-2/3">
-                    <button onclick="adicionarAjuste()" class="w-1/3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold shadow-sm">OK</button>
+                <h2 class="text-slate-400 text-xs font-bold uppercase mb-2">Ajustar Saldo</h2>
+                <div class="flex gap-2 mb-2">
+                    <input type="date" id="dataAjuste" class="bg-slate-50 p-2 rounded-lg border border-slate-200 text-sm w-1/2">
+                    <input type="number" step="0.5" id="ajusteInput" placeholder="Ex: -5 ou 2" class="bg-slate-50 p-2 rounded-lg border border-slate-200 text-sm w-1/2">
                 </div>
+                <button onclick="adicionarAjuste()" class="w-full py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold shadow-sm">Adicionar Ajuste</button>
             </div>
+            
+            <div id="listaAjustes" class="space-y-2"></div>
 
-            <!-- Adicionar Ponto Esquecido -->
-            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                <h2 class="text-slate-400 text-xs font-bold uppercase mb-2">Adicionar Ponto Esquecido</h2>
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm mt-6">
+                <h2 class="text-slate-400 text-xs font-bold uppercase mb-2">Ponto Esquecido</h2>
                 <div class="flex gap-2">
                     <input type="date" id="dataInput" class="bg-slate-50 p-2 rounded-lg border border-slate-200 text-sm w-1/2">
                     <input type="time" id="horaInput" class="bg-slate-50 p-2 rounded-lg border border-slate-200 text-sm w-1/2">
@@ -55,7 +53,6 @@
         <div id="listaResumo" class="space-y-4 max-w-sm mx-auto mb-10"></div>
     </div>
 
-    <!-- Menu Inferior -->
     <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 p-4 flex justify-around items-center shadow-lg z-50">
         <button onclick="showPage('home')" class="flex flex-col items-center text-slate-500 hover:text-indigo-600"><i class="fa-solid fa-clock text-xl"></i><span class="text-[10px] mt-1">Início</span></button>
         <button onclick="showPage('historico')" class="flex flex-col items-center text-slate-500 hover:text-indigo-600"><i class="fa-solid fa-list text-xl"></i><span class="text-[10px] mt-1">Histórico</span></button>
@@ -75,6 +72,7 @@
             const pontos = JSON.parse(localStorage.getItem('pontos') || '[]');
             const ajustes = JSON.parse(localStorage.getItem('bancoAjustes') || '[]');
             const grupos = pontos.reduce((acc, p) => { if(!acc[p.data]) acc[p.data] = []; acc[p.data].push(p); return acc; }, {});
+            
             let totalSaldo = 0;
             Object.keys(grupos).forEach(data => {
                 const registros = grupos[data].sort((a,b) => a.hora.localeCompare(b.hora));
@@ -90,8 +88,40 @@
             });
             totalSaldo += ajustes.reduce((sum, a) => sum + parseFloat(a.valor), 0);
             document.getElementById('saldoTotal').innerText = totalSaldo.toFixed(2) + 'h';
+            renderAjustes(ajustes);
         }
 
+        function renderAjustes(ajustes) {
+            const container = document.getElementById('listaAjustes');
+            container.innerHTML = ajustes.length > 0 ? '<h2 class="text-slate-400 text-xs font-bold uppercase mt-4 mb-2">Histórico de Ajustes</h2>' + ajustes.map(a => `
+                <div class="flex justify-between items-center bg-indigo-50 p-2 rounded text-xs text-indigo-900 border border-indigo-100">
+                    <span>${a.data}</span>
+                    <span>${a.valor > 0 ? '+' : ''}${a.valor}h</span>
+                    <button onclick="deletarAjuste(${a.id})" class="text-red-400"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            `).join('') : '';
+        }
+
+        function adicionarAjuste() {
+            const data = document.getElementById('dataAjuste').value;
+            const val = document.getElementById('ajusteInput').value;
+            if(!data || !val) return alert("Selecione data e valor!");
+            const [y, m, d] = data.split('-');
+            let ajustes = JSON.parse(localStorage.getItem('bancoAjustes') || '[]');
+            ajustes.push({ id: Date.now(), data: `${d}/${m}/${y}`, valor: val });
+            localStorage.setItem('bancoAjustes', JSON.stringify(ajustes));
+            document.getElementById('ajusteInput').value = '';
+            carregarHistorico();
+        }
+
+        function deletarAjuste(id) {
+            let ajustes = JSON.parse(localStorage.getItem('bancoAjustes') || '[]');
+            ajustes = ajustes.filter(a => a.id !== id);
+            localStorage.setItem('bancoAjustes', JSON.stringify(ajustes));
+            carregarHistorico();
+        }
+
+        // ... (Funções baterPonto, adicionarManual, carregarHistorico, showPage, exportarCSV mantêm-se iguais) ...
         function adicionarManual() {
             const dataVal = document.getElementById('dataInput').value;
             const horaVal = document.getElementById('horaInput').value;
@@ -103,16 +133,6 @@
             localStorage.setItem('pontos', JSON.stringify(pontos));
             carregarHistorico();
             alert("Ponto adicionado!");
-        }
-
-        function adicionarAjuste() {
-            const val = document.getElementById('ajusteInput').value;
-            if(!val) return;
-            let ajustes = JSON.parse(localStorage.getItem('bancoAjustes') || '[]');
-            ajustes.push({ id: Date.now(), valor: val });
-            localStorage.setItem('bancoAjustes', JSON.stringify(ajustes));
-            document.getElementById('ajusteInput').value = '';
-            carregarHistorico();
         }
 
         function carregarHistorico() {
