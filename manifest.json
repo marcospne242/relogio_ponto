@@ -2,7 +2,7 @@
   "name": "Punto: Seu Registro Diário",
   "short_name": "Punto",
   "description": "App pessoal de controle de ponto.",
-  "start_url": "/",
+  "start_url": "/relogio_ponto/index.html",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#2563eb",
