@@ -2,55 +2,75 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Ponto Pessoal</title>
-    <link rel="manifest" href="manifest.json">
-    <!-- Tailwind para design moderno e responsivo -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Punto</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
     <style>
-        body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); }
-        .card { background: #1e293b; border-radius: 1rem; }
+        body { background: radial-gradient(circle at top, #1e293b, #0f172a); min-height: 100vh; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
     </style>
 </head>
-<body class="pb-20">
+<body class="flex flex-col items-center justify-center p-4 text-white">
 
-    <!-- Header -->
-    <header class="p-6 text-center">
-        <h1 class="text-2xl font-bold text-blue-400">PontoPessoal</h1>
-        <p id="currentDate" class="text-slate-400 text-sm"></p>
-    </header>
-
-    <!-- App Content -->
-    <main id="app" class="px-4">
+    <div class="w-full max-w-sm glass rounded-3xl p-8 shadow-2xl text-center">
+        <h1 class="text-slate-400 uppercase tracking-widest text-xs font-semibold mb-1">Ponto Pessoal</h1>
+        <p id="currentDate" class="text-slate-200 text-sm mb-8"></p>
         
-        <!-- Tela Home -->
-        <section id="home" class="space-y-6">
-            <div class="card p-8 text-center shadow-lg">
-                <div id="clock" class="text-5xl font-mono font-bold mb-4">00:00:00</div>
-                <button onclick="baterPonto()" class="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-lg shadow-blue-500/30 shadow-lg transition-transform active:scale-95">
-                    <i class="fa-solid fa-clock mr-2"></i> Registrar Ponto
-                </button>
-            </div>
-        </section>
+        <div id="clock" class="text-6xl font-light font-mono tracking-tighter mb-8 text-blue-400">00:00:00</div>
+        
+        <button onclick="baterPonto()" class="w-full py-5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 rounded-2xl font-bold text-lg shadow-lg shadow-blue-900/50 transition-all active:scale-95 border border-blue-400/20">
+            Registrar Ponto
+        </button>
+    </div>
 
-        <!-- Tela Histórico -->
-        <section id="historico" class="hidden space-y-4">
-            <h2 class="text-xl font-semibold mb-4">Histórico Recente</h2>
-            <div id="listaHistorico" class="space-y-3">
-                <!-- Itens inseridos via JS -->
-            </div>
-        </section>
+    <!-- Histórico mais elegante -->
+    <div class="w-full max-w-sm mt-8 space-y-3">
+        <h2 class="text-slate-500 text-xs font-bold uppercase ml-2">Hoje</h2>
+        <div id="listaHistorico" class="space-y-3"></div>
+    </div>
 
-    </main>
+    <script>
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('pt-BR');
+            document.getElementById('currentDate').innerText = now.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
 
-    <!-- Bottom Navigation -->
-    <nav class="fixed bottom-0 w-full glass border-t border-slate-700 p-4 flex justify-around">
-        <button onclick="showPage('home')" class="text-blue-400"><i class="fa-solid fa-house text-xl"></i></button>
-        <button onclick="showPage('historico')" class="text-slate-400"><i class="fa-solid fa-list text-xl"></i></button>
-        <button onclick="exportarCSV()" class="text-slate-400"><i class="fa-solid fa-download text-xl"></i></button>
-    </nav>
+        function baterPonto() {
+            const agora = new Date();
+            const registro = {
+                id: Date.now(),
+                hora: agora.toLocaleTimeString('pt-BR')
+            };
+            let pontos = JSON.parse(localStorage.getItem('pontos') || '[]');
+            pontos.unshift(registro);
+            localStorage.setItem('pontos', JSON.stringify(pontos));
+            carregarHistorico();
+            // Feedback simples
+            navigator.vibrate && navigator.vibrate(100);
+        }
+
+        function carregarHistorico() {
+            const pontos = JSON.parse(localStorage.getItem('pontos') || '[]');
+            const container = document.getElementById('listaHistorico');
+            if(pontos.length === 0) {
+                container.innerHTML = '<p class="text-slate-600 text-sm text-center italic">Nenhum ponto hoje</p>';
+                return;
+            }
+            container.innerHTML = pontos.map(p => `
+                <div class="glass p-4 rounded-2xl flex justify-between items-center text-sm">
+                    <span class="text-slate-300">Entrada/Saída</span>
+                    <span class="font-mono font-bold text-blue-300">${p.hora}</span>
+                </div>
+            `).join('');
+        }
+        carregarHistorico();
+    </script>
+</body>
+</html>
 
     <script>
         // Lógica do Relógio
