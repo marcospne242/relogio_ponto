@@ -8,39 +8,43 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="manifest" href="manifest.json">
     <style>
-        body { background: radial-gradient(circle at top, #1e293b, #0f172a); min-height: 100vh; color: white; }
-        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        body { background-color: #F8FAFC; } /* Fundo bem clarinho */
     </style>
 </head>
-<body class="pb-24">
+<body class="pb-24 font-sans text-slate-800">
 
-    <!-- Tela Home -->
-    <div id="home" class="p-4 mt-10">
-        <div class="w-full max-w-sm mx-auto glass rounded-3xl p-8 shadow-2xl text-center">
-            <h1 class="text-slate-400 uppercase tracking-widest text-xs font-semibold mb-1">Ponto Pessoal</h1>
-            <p id="currentDate" class="text-slate-200 text-sm mb-8"></p>
-            <div id="clock" class="text-5xl font-light font-mono tracking-tighter mb-8 text-blue-400">00:00:00</div>
-            <button onclick="baterPonto()" class="w-full py-5 bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl font-bold text-lg shadow-lg shadow-blue-900/50 transition-all active:scale-95 border border-blue-400/20">
+    <div id="home" class="flex flex-col items-center justify-center min-h-[85vh] p-4">
+        <div class="w-full max-w-sm bg-white p-8 rounded-3xl shadow-lg border border-slate-100 text-center">
+            <h1 class="text-slate-400 uppercase tracking-widest text-xs font-bold mb-1">Ponto Pessoal</h1>
+            <p id="currentDate" class="text-slate-500 text-sm mb-8"></p>
+            
+            <div id="clock" class="text-6xl font-light font-mono tracking-tighter mb-8 text-indigo-600">00:00:00</div>
+            
+            <button onclick="baterPonto()" class="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-lg shadow-md transition-all active:scale-95">
                 Registrar Ponto
             </button>
         </div>
     </div>
 
-    <!-- Tela Histórico -->
     <div id="historico" class="hidden p-4 mt-6">
-        <h2 class="text-slate-400 text-xs font-bold uppercase ml-4 mb-4">Histórico Completo</h2>
+        <h2 class="text-slate-400 text-xs font-bold uppercase ml-4 mb-4">Histórico</h2>
         <div id="listaHistorico" class="space-y-3 max-w-sm mx-auto"></div>
     </div>
 
-    <!-- Menu Inferior -->
-    <nav class="fixed bottom-0 w-full glass border-t border-white/10 p-4 flex justify-around items-center">
-        <button onclick="showPage('home')" class="flex flex-col items-center text-slate-400"><i class="fa-solid fa-clock text-xl"></i><span class="text-[10px]">Início</span></button>
-        <button onclick="showPage('historico')" class="flex flex-col items-center text-slate-400"><i class="fa-solid fa-list text-xl"></i><span class="text-[10px]">Histórico</span></button>
-        <button onclick="exportarCSV()" class="flex flex-col items-center text-slate-400"><i class="fa-solid fa-download text-xl"></i><span class="text-[10px]">Baixar</span></button>
+    <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 p-4 flex justify-around items-center shadow-lg">
+        <button onclick="showPage('home')" class="flex flex-col items-center text-slate-500 hover:text-indigo-600 transition-colors">
+            <i class="fa-solid fa-clock text-xl"></i><span class="text-[10px] mt-1">Início</span>
+        </button>
+        <button onclick="showPage('historico')" class="flex flex-col items-center text-slate-500 hover:text-indigo-600 transition-colors">
+            <i class="fa-solid fa-list text-xl"></i><span class="text-[10px] mt-1">Histórico</span>
+        </button>
+        <button onclick="exportarCSV()" class="flex flex-col items-center text-slate-500 hover:text-indigo-600 transition-colors">
+            <i class="fa-solid fa-download text-xl"></i><span class="text-[10px] mt-1">Baixar</span>
+        </button>
     </nav>
 
     <script>
-        // Relógio e Data
+        // Relógio e Data (sem piscar)
         function updateClock() {
             const now = new Date();
             document.getElementById('clock').innerText = now.toLocaleTimeString('pt-BR');
@@ -49,7 +53,6 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Registrar Ponto
         function baterPonto() {
             const agora = new Date();
             const registro = {
@@ -64,22 +67,20 @@
             carregarHistorico();
         }
 
-        // Carregar Histórico
         function carregarHistorico() {
             const pontos = JSON.parse(localStorage.getItem('pontos') || '[]');
             const container = document.getElementById('listaHistorico');
             container.innerHTML = pontos.length > 0 ? pontos.map(p => `
-                <div class="glass p-4 rounded-2xl flex justify-between items-center text-sm">
+                <div class="bg-white p-4 rounded-2xl flex justify-between items-center text-sm shadow-sm border border-slate-100">
                     <div>
                         <p class="text-slate-400 text-xs">${p.data}</p>
-                        <p class="font-bold text-lg">${p.hora}</p>
+                        <p class="font-bold text-lg text-slate-700">${p.hora}</p>
                     </div>
-                    <button onclick="deletarPonto(${p.id})" class="text-red-400 hover:text-red-300 p-2"><i class="fa-solid fa-trash"></i></button>
+                    <button onclick="deletarPonto(${p.id})" class="text-slate-300 hover:text-red-500 p-2 transition-colors"><i class="fa-solid fa-trash"></i></button>
                 </div>
-            `).join('') : '<p class="text-center text-slate-600 mt-10">Nenhum ponto registrado.</p>';
+            `).join('') : '<p class="text-center text-slate-400 mt-10 italic">Nenhum ponto registrado hoje.</p>';
         }
 
-        // Deletar
         function deletarPonto(id) {
             if(!confirm('Excluir este registro?')) return;
             let pontos = JSON.parse(localStorage.getItem('pontos') || '[]');
@@ -88,7 +89,6 @@
             carregarHistorico();
         }
 
-        // Navegação
         function showPage(pageId) {
             document.getElementById('home').classList.add('hidden');
             document.getElementById('historico').classList.add('hidden');
@@ -96,7 +96,6 @@
             if(pageId === 'historico') carregarHistorico();
         }
 
-        // Exportar
         function exportarCSV() {
             const pontos = JSON.parse(localStorage.getItem('pontos') || '[]');
             if(pontos.length === 0) return alert("Sem dados para exportar");
