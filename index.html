@@ -52,6 +52,7 @@
             
             <div id="listaResumo" class="space-y-6 mt-4"></div>
         </div>
+        <button onclick="limparTudo()" class="w-full mt-4 py-2 bg-red-500 text-white rounded-lg text-sm font-bold shadow-sm">Limpar Todos os Dados</button>
     </div>
 
     <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 p-4 flex justify-around items-center shadow-lg z-50">
@@ -147,6 +148,21 @@
             `).join('');
             document.getElementById('saldoTotal').innerText = saldoAcumulado.toFixed(2) + 'h';
         }
+
+        function limparTudo() {
+    // 1. Abre um prompt pedindo para digitar uma palavra
+    const confirmacao = prompt("CUIDADO! Isso apagará TODO o seu histórico e banco de horas.\n\nPara confirmar a exclusão irreversível, digite a palavra RESET abaixo:");
+
+    // 2. Verifica se a palavra digitada foi exatamente "RESET"
+    if (confirmacao === "RESET") {
+        localStorage.clear(); // Apaga os dados
+        carregarHistorico();  // Atualiza a tela
+        alert("Dados apagados com sucesso!");
+    } else {
+        // Se o usuário digitou errado ou apertou cancelar
+        alert("Operação cancelada. Seus dados permanecem intactos.");
+    }
+}
 
         // Funções de suporte
         function baterPonto() { const a = new Date(); let p = JSON.parse(localStorage.getItem('pontos') || '[]'); p.unshift({id: Date.now(), data: a.toLocaleDateString('pt-BR'), hora: a.toLocaleTimeString('pt-BR')}); localStorage.setItem('pontos', JSON.stringify(p)); carregarHistorico(); }
