@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Punto - Gestão de Horas</title>
+    <title>Punto</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
     <style> body { background-color: #F8FAFC; } </style>
 </head>
 <body class="pb-24 font-sans text-slate-800">
@@ -22,18 +23,18 @@
         </div>
     </div>
 
-    <!-- Tela Histórico com Resumo -->
+    <!-- Tela Histórico -->
     <div id="historico" class="hidden p-4 mt-6">
         <h2 class="text-slate-400 text-xs font-bold uppercase ml-4 mb-4">Adicionar Manual</h2>
-        <div class="bg-indigo-50 p-4 rounded-2xl mb-6 max-w-sm mx-auto border border-indigo-100">
+        <div class="bg-white p-4 rounded-2xl mb-6 max-w-sm mx-auto border border-slate-100 shadow-sm">
             <div class="flex gap-2">
-                <input type="date" id="dataInput" class="bg-white p-2 rounded-lg border border-indigo-200 text-sm w-1/2">
-                <input type="time" id="horaInput" class="bg-white p-2 rounded-lg border border-indigo-200 text-sm w-1/2">
+                <input type="date" id="dataInput" class="bg-slate-50 p-2 rounded-lg border border-slate-200 text-sm w-1/2">
+                <input type="time" id="horaInput" class="bg-slate-50 p-2 rounded-lg border border-slate-200 text-sm w-1/2">
             </div>
             <button onclick="adicionarManual()" class="w-full mt-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold shadow-sm">Adicionar</button>
         </div>
 
-        <h2 class="text-slate-400 text-xs font-bold uppercase ml-4 mb-4">Resumo do Dia</h2>
+        <h2 class="text-slate-400 text-xs font-bold uppercase ml-4 mb-4">Resumo por Dia</h2>
         <div id="listaResumo" class="space-y-4 max-w-sm mx-auto"></div>
     </div>
 
@@ -53,24 +54,15 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        function calcularHorasDia(pontosDoDia) {
-            // Ordena por hora
-            pontosDoDia.sort((a,b) => a.hora.localeCompare(b.hora));
-            let totalSegundos = 0;
-            // Soma os intervalos pares (ex: Saída - Entrada)
-            for(let i = 0; i < pontosDoDia.length - 1; i += 2) {
-                let start = new Date("1970-01-01 " + pontosDoDia[i].hora);
-                let end = new Date("1970-01-01 " + pontosDoDia[i+1].hora);
-                totalSegundos += (end - start) / 1000;
-            }
-            return totalSegundos / 3600; // retorna em horas decimal
+        function toggleExpand(id) {
+            const el = document.getElementById('details-' + id);
+            el.classList.toggle('hidden');
         }
 
         function carregarHistorico() {
             const pontos = JSON.parse(localStorage.getItem('pontos') || '[]');
             const container = document.getElementById('listaResumo');
             
-            // Agrupar por data
             const grupos = pontos.reduce((acc, p) => {
                 if(!acc[p.data]) acc[p.data] = [];
                 acc[p.data].push(p);
@@ -78,29 +70,44 @@
             }, {});
 
             container.innerHTML = Object.keys(grupos).sort((a,b) => new Date(b.split('/').reverse()) - new Date(a.split('/').reverse())).map(data => {
-                const horasTrabalhadas = calcularHorasDia(grupos[data]);
-                // Determinar meta: 5h dia semana, 4h sabado
+                const idDiv = data.replace(/\//g, '-');
+                // Calcula total e meta
+                let totalSegundos = 0;
+                const registrosDoDia = grupos[data].sort((a,b) => a.hora.localeCompare(b.hora));
+                for(let i = 0; i < registrosDoDia.length - 1; i += 2) {
+                    let start = new Date("1970-01-01 " + registrosDoDia[i].hora);
+                    let end = new Date("1970-01-01 " + registrosDoDia[i+1].hora);
+                    totalSegundos += (end - start) / 1000;
+                }
+                const horasTrabalhadas = totalSegundos / 3600;
                 const [d,m,y] = data.split('/');
                 const diaSemana = new Date(y, m-1, d).getDay();
                 const meta = (diaSemana >= 1 && diaSemana <= 5) ? 5 : (diaSemana === 6 ? 4 : 0);
-                const saldo = horasTrabalhadas - meta;
                 
                 return `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="font-bold text-slate-700">${data}</span>
-                        <span class="text-xs ${saldo > 0 ? 'text-orange-500' : 'text-emerald-500'} font-bold">
-                            ${saldo > 0 ? 'Extra: ' + saldo.toFixed(2) + 'h' : 'OK'}
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="p-5 cursor-pointer flex justify-between items-center" onclick="toggleExpand('${idDiv}')">
+                        <div>
+                            <p class="font-bold text-slate-700">${data}</p>
+                            <p class="text-xs text-slate-500">Trabalhado: ${horasTrabalhadas.toFixed(2)}h / Meta: ${meta}h</p>
+                        </div>
+                        <span class="text-xs font-bold ${horasTrabalhadas >= meta ? 'text-emerald-500' : 'text-slate-400'}">
+                            ${horasTrabalhadas >= meta ? 'OK' : 'Pendente'}
+                            <i class="fa-solid fa-chevron-down ml-2"></i>
                         </span>
                     </div>
-                    <div class="text-sm text-slate-500">
-                        Trabalhado: <b>${horasTrabalhadas.toFixed(2)}h</b> / Meta: ${meta}h
+                    <div id="details-${idDiv}" class="hidden bg-slate-50 p-4 border-t border-slate-100">
+                        ${registrosDoDia.map(r => `
+                            <div class="flex justify-between items-center mb-2 last:mb-0 text-sm">
+                                <span class="text-slate-600 font-mono">${r.hora}</span>
+                                <button onclick="event.stopPropagation(); deletarPonto(${r.id})" class="text-red-400 hover:text-red-600 px-2">Excluir</button>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>`;
             }).join('');
         }
 
-        // Funções de bater ponto e exportar permanecem similares, mas atualizadas...
         function baterPonto() {
             const agora = new Date();
             const registro = { id: Date.now(), data: agora.toLocaleDateString('pt-BR'), hora: agora.toLocaleTimeString('pt-BR') };
@@ -120,15 +127,15 @@
             pontos.unshift(registro);
             localStorage.setItem('pontos', JSON.stringify(pontos));
             carregarHistorico();
+            alert("Ponto adicionado!");
         }
 
-        function exportarCSV() {
-            const pontos = JSON.parse(localStorage.getItem('pontos') || '[]');
-            let csv = "Data,Hora,Trabalhado,Meta,Saldo\n";
-            // Lógica simplificada para exportar grupo por grupo
-            // (Você pode expandir isso para detalhar cada registro se preferir)
-            alert("Exportando resumo do período..."); 
-            // ... (Lógica de exportar grupos mantendo o mesmo padrão)
+        function deletarPonto(id) {
+            if(!confirm('Excluir este registro?')) return;
+            let pontos = JSON.parse(localStorage.getItem('pontos') || '[]');
+            pontos = pontos.filter(p => p.id !== id);
+            localStorage.setItem('pontos', JSON.stringify(pontos));
+            carregarHistorico();
         }
 
         function showPage(pageId) {
@@ -136,6 +143,18 @@
             document.getElementById('historico').classList.add('hidden');
             document.getElementById(pageId).classList.remove('hidden');
             if(pageId === 'historico') carregarHistorico();
+        }
+
+        function exportarCSV() {
+            const pontos = JSON.parse(localStorage.getItem('pontos') || '[]');
+            if(pontos.length === 0) return alert("Sem dados");
+            let csv = "Data,Hora\n" + pontos.map(p => `${p.data},${p.hora}`).join("\n");
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'resumo_ponto.csv';
+            a.click();
         }
     </script>
 </body>
