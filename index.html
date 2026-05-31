@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Punto - Gestão Completa</title>
+    <title>Punto - Gestão Mensal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style> body { background-color: #F8FAFC; } </style>
@@ -15,9 +15,7 @@
             <h1 class="text-slate-400 uppercase tracking-widest text-xs font-bold mb-1">Ponto Pessoal</h1>
             <p id="currentDate" class="text-slate-500 text-sm mb-8"></p>
             <div id="clock" class="text-6xl font-light font-mono tracking-tighter mb-8 text-indigo-600">00:00:00</div>
-            <button onclick="baterPonto()" class="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-lg shadow-md transition-all active:scale-95">
-                Registrar Ponto
-            </button>
+            <button onclick="baterPonto()" class="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-lg shadow-md transition-all active:scale-95">Registrar Ponto</button>
         </div>
     </div>
 
@@ -30,33 +28,29 @@
         <div class="max-w-sm mx-auto space-y-4">
             <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                 <h2 class="text-slate-400 text-xs font-bold uppercase mb-2">Ajustar Saldo</h2>
-                <div class="flex gap-2 mb-2">
-                    <input type="date" id="dataAjuste" class="bg-slate-50 p-2 rounded-lg border border-slate-200 text-sm w-1/2">
-                    <input type="number" step="0.5" id="ajusteInput" placeholder="Ex: -5 ou 2" class="bg-slate-50 p-2 rounded-lg border border-slate-200 text-sm w-1/2">
+                <div class="flex gap-2">
+                    <input type="date" id="dataAjuste" class="bg-slate-50 p-2 rounded-lg border text-sm w-1/2">
+                    <input type="number" step="0.5" id="ajusteInput" placeholder="Ex: -5" class="bg-slate-50 p-2 rounded-lg border text-sm w-1/2">
                 </div>
-                <button onclick="adicionarAjuste()" class="w-full py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold shadow-sm">Adicionar Ajuste</button>
+                <button onclick="adicionarAjuste()" class="w-full mt-2 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold">Adicionar Ajuste</button>
             </div>
-            
-            <div id="listaAjustes" class="space-y-2"></div>
-
-            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm mt-6">
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                 <h2 class="text-slate-400 text-xs font-bold uppercase mb-2">Ponto Esquecido</h2>
                 <div class="flex gap-2">
-                    <input type="date" id="dataInput" class="bg-slate-50 p-2 rounded-lg border border-slate-200 text-sm w-1/2">
-                    <input type="time" id="horaInput" class="bg-slate-50 p-2 rounded-lg border border-slate-200 text-sm w-1/2">
+                    <input type="date" id="dataInput" class="bg-slate-50 p-2 rounded-lg border text-sm w-1/2">
+                    <input type="time" id="horaInput" class="bg-slate-50 p-2 rounded-lg border text-sm w-1/2">
                 </div>
-                <button onclick="adicionarManual()" class="w-full mt-2 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold shadow-sm">Adicionar Ponto</button>
+                <button onclick="adicionarManual()" class="w-full mt-2 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold">Adicionar</button>
             </div>
+            
+            <div id="listaResumo" class="space-y-6 mt-4"></div>
         </div>
-
-        <h2 class="text-slate-400 text-xs font-bold uppercase ml-4 mt-6 mb-4">Resumo por Dia</h2>
-        <div id="listaResumo" class="space-y-4 max-w-sm mx-auto mb-10"></div>
     </div>
 
     <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 p-4 flex justify-around items-center shadow-lg z-50">
-        <button onclick="showPage('home')" class="flex flex-col items-center text-slate-500 hover:text-indigo-600"><i class="fa-solid fa-clock text-xl"></i><span class="text-[10px] mt-1">Início</span></button>
-        <button onclick="showPage('historico')" class="flex flex-col items-center text-slate-500 hover:text-indigo-600"><i class="fa-solid fa-list text-xl"></i><span class="text-[10px] mt-1">Histórico</span></button>
-        <button onclick="exportarCSV()" class="flex flex-col items-center text-slate-500 hover:text-indigo-600"><i class="fa-solid fa-download text-xl"></i><span class="text-[10px] mt-1">Baixar</span></button>
+        <button onclick="showPage('home')" class="flex flex-col items-center text-slate-500"><i class="fa-solid fa-clock text-xl"></i><span class="text-[10px] mt-1">Início</span></button>
+        <button onclick="showPage('historico')" class="flex flex-col items-center text-slate-500"><i class="fa-solid fa-list text-xl"></i><span class="text-[10px] mt-1">Histórico</span></button>
+        <button onclick="exportarCSV()" class="flex flex-col items-center text-slate-500"><i class="fa-solid fa-download text-xl"></i><span class="text-[10px] mt-1">Baixar</span></button>
     </nav>
 
     <script>
@@ -68,145 +62,89 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        function calcularBanco() {
+        function getStats() {
             const pontos = JSON.parse(localStorage.getItem('pontos') || '[]');
             const ajustes = JSON.parse(localStorage.getItem('bancoAjustes') || '[]');
-            const grupos = pontos.reduce((acc, p) => { if(!acc[p.data]) acc[p.data] = []; acc[p.data].push(p); return acc; }, {});
             
-            let totalSaldo = 0;
-            Object.keys(grupos).forEach(data => {
-                const registros = grupos[data].sort((a,b) => a.hora.localeCompare(b.hora));
-                let totalSegundos = 0;
-                for(let i = 0; i < registros.length - 1; i += 2) {
-                    let start = new Date("1970-01-01 " + registros[i].hora);
-                    let end = new Date("1970-01-01 " + registros[i+1].hora);
-                    totalSegundos += (end - start) / 1000;
-                }
-                const [d,m,y] = data.split('/');
-                const meta = (new Date(y, m-1, d).getDay() >= 1 && new Date(y, m-1, d).getDay() <= 5) ? 5 : 4;
-                totalSaldo += ((totalSegundos / 3600) - meta);
+            // Ordena tudo cronologicamente
+            const todos = [...pontos.map(p => ({type: 'ponto', ...p})), ...ajustes.map(a => ({type: 'ajuste', ...a}))];
+            todos.sort((a,b) => new Date(a.data.split('/').reverse()) - new Date(b.data.split('/').reverse()));
+
+            // Agrupa por data
+            const grupos = {};
+            todos.forEach(item => {
+                if(!grupos[item.data]) grupos[item.data] = { pontos: [], ajuste: 0 };
+                if(item.type === 'ponto') grupos[item.data].pontos.push(item);
+                else grupos[item.data].ajuste += parseFloat(item.valor);
             });
-            totalSaldo += ajustes.reduce((sum, a) => sum + parseFloat(a.valor), 0);
-            document.getElementById('saldoTotal').innerText = totalSaldo.toFixed(2) + 'h';
-            renderAjustes(ajustes);
-        }
 
-        function renderAjustes(ajustes) {
-            const container = document.getElementById('listaAjustes');
-            container.innerHTML = ajustes.length > 0 ? '<h2 class="text-slate-400 text-xs font-bold uppercase mt-4 mb-2">Histórico de Ajustes</h2>' + ajustes.map(a => `
-                <div class="flex justify-between items-center bg-indigo-50 p-2 rounded text-xs text-indigo-900 border border-indigo-100">
-                    <span>${a.data}</span>
-                    <span>${a.valor > 0 ? '+' : ''}${a.valor}h</span>
-                    <button onclick="deletarAjuste(${a.id})" class="text-red-400"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-            `).join('') : '';
-        }
-
-        function adicionarAjuste() {
-            const data = document.getElementById('dataAjuste').value;
-            const val = document.getElementById('ajusteInput').value;
-            if(!data || !val) return alert("Selecione data e valor!");
-            const [y, m, d] = data.split('-');
-            let ajustes = JSON.parse(localStorage.getItem('bancoAjustes') || '[]');
-            ajustes.push({ id: Date.now(), data: `${d}/${m}/${y}`, valor: val });
-            localStorage.setItem('bancoAjustes', JSON.stringify(ajustes));
-            document.getElementById('ajusteInput').value = '';
-            carregarHistorico();
-        }
-
-        function deletarAjuste(id) {
-            let ajustes = JSON.parse(localStorage.getItem('bancoAjustes') || '[]');
-            ajustes = ajustes.filter(a => a.id !== id);
-            localStorage.setItem('bancoAjustes', JSON.stringify(ajustes));
-            carregarHistorico();
-        }
-
-        // ... (Funções baterPonto, adicionarManual, carregarHistorico, showPage, exportarCSV mantêm-se iguais) ...
-        function adicionarManual() {
-            const dataVal = document.getElementById('dataInput').value;
-            const horaVal = document.getElementById('horaInput').value;
-            if(!dataVal || !horaVal) return alert("Selecione data e hora!");
-            const [y, m, d] = dataVal.split('-');
-            const registro = { id: Date.now(), data: `${d}/${m}/${y}`, hora: horaVal };
-            let pontos = JSON.parse(localStorage.getItem('pontos') || '[]');
-            pontos.unshift(registro);
-            localStorage.setItem('pontos', JSON.stringify(pontos));
-            carregarHistorico();
-            alert("Ponto adicionado!");
+            return grupos;
         }
 
         function carregarHistorico() {
-            calcularBanco();
-            const pontos = JSON.parse(localStorage.getItem('pontos') || '[]');
+            const grupos = getStats();
             const container = document.getElementById('listaResumo');
-            const grupos = pontos.reduce((acc, p) => { if(!acc[p.data]) acc[p.data] = []; acc[p.data].push(p); return acc; }, {});
-            
-            container.innerHTML = Object.keys(grupos).sort((a,b) => new Date(b.split('/').reverse()) - new Date(a.split('/').reverse())).map(data => {
-                const idDiv = data.replace(/\//g, '-');
-                const registros = grupos[data].sort((a,b) => a.hora.localeCompare(b.hora));
-                let totalSegundos = 0;
-                for(let i = 0; i < registros.length - 1; i += 2) {
-                    let start = new Date("1970-01-01 " + registros[i].hora);
-                    let end = new Date("1970-01-01 " + registros[i+1].hora);
-                    totalSegundos += (end - start) / 1000;
-                }
-                const worked = totalSegundos / 3600;
-                const [d,m,y] = data.split('/');
-                const meta = (new Date(y, m-1, d).getDay() >= 1 && new Date(y, m-1, d).getDay() <= 5) ? 5 : 4;
-                
-                return `
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div class="p-5 cursor-pointer flex justify-between items-center" onclick="document.getElementById('details-${idDiv}').classList.toggle('hidden')">
-                        <div>
-                            <p class="font-bold text-slate-700">${data}</p>
-                            <p class="text-xs text-slate-500">${worked.toFixed(2)}h / Meta: ${meta}h</p>
-                        </div>
-                        <span class="text-xs font-bold ${worked >= meta ? 'text-emerald-500' : 'text-slate-400'}">
-                            ${(worked - meta).toFixed(2)}h <i class="fa-solid fa-chevron-down ml-2"></i>
-                        </span>
+            let saldoAcumulado = 0;
+            const meses = {};
+
+            // Organiza em meses
+            Object.keys(grupos).forEach(data => {
+                const mesAno = data.split('/').slice(1).join('/');
+                if(!meses[mesAno]) meses[mesAno] = [];
+                meses[mesAno].push({ data, ...grupos[data] });
+            });
+
+            container.innerHTML = Object.keys(meses).sort((a,b) => new Date(b.split('/')[1], b.split('/')[0]) - new Date(a.split('/')[1], a.split('/')[0])).map(mes => `
+                <div>
+                    <h3 class="text-indigo-800 font-bold mb-2 ml-2 text-lg">${mes}</h3>
+                    <div class="space-y-2">
+                        ${meses[mes].sort((a,b) => new Date(b.data.split('/').reverse()) - new Date(a.data.split('/').reverse())).map(dia => {
+                            const regs = dia.pontos.sort((a,b) => a.hora.localeCompare(b.hora));
+                            let s = 0;
+                            for(let i=0; i<regs.length-1; i+=2) s += (new Date("1970-01-01 "+regs[i+1].hora) - new Date("1970-01-01 "+regs[i].hora))/3600000;
+                            const [d,m,y] = dia.data.split('/');
+                            const meta = (new Date(y, m-1, d).getDay() >= 1 && new Date(y, m-1, d).getDay() <= 5) ? 5 : 4;
+                            const saldoDia = s - meta + dia.ajuste;
+                            saldoAcumulado += saldoDia;
+                            
+                            return `
+                            <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                                <div class="p-4 cursor-pointer flex justify-between items-center" onclick="document.getElementById('d-${dia.data.replace(/\//g,'-')}').classList.toggle('hidden')">
+                                    <div><p class="font-bold text-sm">${dia.data}</p><p class="text-[10px] text-slate-500">${s.toFixed(2)}h trabalhado</p></div>
+                                    <span class="text-xs font-bold ${saldoDia >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${saldoDia.toFixed(2)}h</span>
+                                </div>
+                                <div id="d-${dia.data.replace(/\//g,'-')}" class="hidden bg-slate-50 p-3 border-t">${regs.map(r => `<div class="flex justify-between text-xs mb-1"><span>${r.hora}</span><button onclick="deletarPonto(${r.id})" class="text-red-400">Excluir</button></div>`).join('')}</div>
+                            </div>`;
+                        }).join('')}
                     </div>
-                    <div id="details-${idDiv}" class="hidden bg-slate-50 p-4 border-t border-slate-100">
-                        ${registros.map(r => `
-                            <div class="flex justify-between items-center mb-2 text-sm">
-                                <span class="text-slate-600 font-mono">${r.hora}</span>
-                                <button onclick="deletarPonto(${r.id})" class="text-red-400 text-xs">Excluir</button>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>`;
-            }).join('');
+                </div>
+            `).join('');
+            document.getElementById('saldoTotal').innerText = saldoAcumulado.toFixed(2) + 'h';
         }
 
-        function baterPonto() {
-            const agora = new Date();
-            const registro = { id: Date.now(), data: agora.toLocaleDateString('pt-BR'), hora: agora.toLocaleTimeString('pt-BR') };
-            let pontos = JSON.parse(localStorage.getItem('pontos') || '[]');
-            pontos.unshift(registro);
-            localStorage.setItem('pontos', JSON.stringify(pontos));
-            carregarHistorico();
-        }
-        function deletarPonto(id) {
-            let pontos = JSON.parse(localStorage.getItem('pontos') || '[]');
-            pontos = pontos.filter(p => p.id !== id);
-            localStorage.setItem('pontos', JSON.stringify(pontos));
-            carregarHistorico();
-        }
-        function showPage(pageId) {
-            document.getElementById('home').classList.add('hidden');
-            document.getElementById('historico').classList.add('hidden');
-            document.getElementById(pageId).classList.remove('hidden');
-            if(pageId === 'historico') carregarHistorico();
-        }
         function exportarCSV() {
-            const pontos = JSON.parse(localStorage.getItem('pontos') || '[]');
-            let csv = "Data,Hora\n" + pontos.map(p => `${p.data},${p.hora}`).join("\n");
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'resumo_ponto.csv';
-            a.click();
+            const grupos = getStats();
+            let csv = "Data,Horas Trabalhadas,Meta,Saldo Dia,Saldo Acumulado\n";
+            let acumulado = 0;
+            Object.keys(grupos).sort((a,b) => new Date(a.split('/').reverse()) - new Date(b.split('/').reverse())).forEach(data => {
+                const regs = grupos[data].pontos.sort((a,b) => a.hora.localeCompare(b.hora));
+                let s = 0;
+                for(let i=0; i<regs.length-1; i+=2) s += (new Date("1970-01-01 "+regs[i+1].hora) - new Date("1970-01-01 "+regs[i].hora))/3600000;
+                const [d,m,y] = data.split('/');
+                const meta = (new Date(y, m-1, d).getDay() >= 1 && new Date(y, m-1, d).getDay() <= 5) ? 5 : 4;
+                const saldoDia = s - meta + grupos[data].ajuste;
+                acumulado += saldoDia;
+                csv += `${data},${s.toFixed(2)},${meta},${saldoDia.toFixed(2)},${acumulado.toFixed(2)}\n`;
+            });
+            const blob = new Blob([csv], {type: 'text/csv'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'banco_horas_completo.csv'; a.click();
         }
+
+        function baterPonto() { const a = new Date(); let p = JSON.parse(localStorage.getItem('pontos') || '[]'); p.unshift({id: Date.now(), data: a.toLocaleDateString('pt-BR'), hora: a.toLocaleTimeString('pt-BR')}); localStorage.setItem('pontos', JSON.stringify(p)); carregarHistorico(); }
+        function adicionarManual() { const d = document.getElementById('dataInput').value, h = document.getElementById('horaInput').value; if(!d || !h) return; const [y,m,j] = d.split('-'); let p = JSON.parse(localStorage.getItem('pontos') || '[]'); p.unshift({id: Date.now(), data: `${j}/${m}/${y}`, hora: h}); localStorage.setItem('pontos', JSON.stringify(p)); carregarHistorico(); }
+        function adicionarAjuste() { const d = document.getElementById('dataAjuste').value, v = document.getElementById('ajusteInput').value; if(!d || !v) return; const [y,m,j] = d.split('-'); let a = JSON.parse(localStorage.getItem('bancoAjustes') || '[]'); a.push({id: Date.now(), data: `${j}/${m}/${y}`, valor: v}); localStorage.setItem('bancoAjustes', JSON.stringify(a)); carregarHistorico(); }
+        function deletarPonto(id) { let p = JSON.parse(localStorage.getItem('pontos') || '[]'); p = p.filter(x => x.id !== id); localStorage.setItem('pontos', JSON.stringify(p)); carregarHistorico(); }
+        function showPage(p) { document.getElementById('home').classList.add('hidden'); document.getElementById('historico').classList.add('hidden'); document.getElementById(p).classList.remove('hidden'); if(p === 'historico') carregarHistorico(); }
     </script>
 </body>
 </html>
